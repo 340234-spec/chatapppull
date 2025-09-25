@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Room</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e2f;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      margin-top: 20px;
+      color: #00ffe7;
+    }
+
+    #chat-box {
+      width: 90%;
+      max-width: 600px;
+      height: 400px;
+      background: #2a2a3d;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 10px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+
+    .message {
+      margin: 5px 0;
+      padding: 6px 10px;
+      background: #3a3a4f;
+      border-radius: 4px;
+    }
+
+    .input-area {
+      display: flex;
+      width: 90%;
+      max-width: 600px;
+    }
+
+    #username-area input,
+    #chat-area input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 4px 0 0 4px;
+      background: #2a2a3d;
+      color: #fff;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #00ffe7;
+      color: #000;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00cbbf;
+    }
+  </style>
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+</head>
+<body>
+  <h2>💬 Chat Room</h2>
+  <div id="chat-box"></div>
+
+  <div id="username-area" class="input-area">
+    <input id="username" type="text" placeholder="Enter your username">
+    <button onclick="setUsername()">Join</button>
+  </div>
+
+  <div id="chat-area" class="input-area" style="display:none;">
+    <input id="myMessage" type="text" placeholder="Type your message...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <script>
+    var socket = io();
+    var currentUser = '';
+
+    socket.on('message', function(msg){
+      var item = document.createElement('div');
+      item.className = 'message';
+      item.textContent = msg;
+      document.getElementById('chat-box').appendChild(item);
+      document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+    });
+
+    function setUsername() {
+      var usernameInput = document.getElementById('username');
+      var username = usernameInput.value.trim();
+      if (username !== '') {
+        currentUser = username;
+        document.getElementById('username-area').style.display = 'none';
+        document.getElementById('chat-area').style.display = 'flex';
+        socket.emit('message', { username: currentUser, text: 'joined the chat!' });
+      }
+    }
+
+    function sendMessage() {
+      var input = document.getElementById('myMessage');
+      var text = input.value.trim();
+      if (text !== '') {
+        socket.emit('message', { username: currentUser, text: text });
+        input.value = '';
+      }
+    }
+  </script>
+</body>
+</html>
