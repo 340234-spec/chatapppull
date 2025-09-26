@@ -45,8 +45,7 @@
       max-width: 600px;
     }
 
-    #username-area input,
-    #chat-area input {
+    input {
       flex: 1;
       padding: 10px;
       border: none;
@@ -67,16 +66,54 @@
     button:hover {
       background: #00cbbf;
     }
+
+    #auth-area {
+      width: 90%;
+      max-width: 600px;
+      margin-bottom: 20px;
+    }
+
+    #manual-signup input {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      background: #2a2a3d;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+    }
+
+    #manual-signup button {
+      margin-top: 10px;
+      width: 100%;
+    }
   </style>
+
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
 </head>
 <body>
   <h2>💬 Chat Room</h2>
   <div id="chat-box"></div>
 
-  <div id="username-area" class="input-area">
-    <input id="username" type="text" placeholder="Enter your username">
-    <button onclick="setUsername()">Join</button>
+  <div id="auth-area">
+    <h3>Login or Sign Up</h3>
+
+    <!-- Google Sign-In -->
+    <div id="g_id_onload"
+         data-client_id="1011927387913-iuaom6p156jlc026ujnfd3ctkeh6o3re.apps.googleusercontent.com"
+         data-callback="handleGoogleLogin"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
+
+    <!-- Manual Signup -->
+    <div id="manual-signup">
+      <input id="manual-username" type="text" placeholder="Username">
+      <input id="manual-password" type="password" placeholder="Password">
+      <button onclick="manualLogin()">Sign Up</button>
+    </div>
   </div>
 
   <div id="chat-area" class="input-area" style="display:none;">
@@ -96,15 +133,25 @@
       document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
     });
 
-    function setUsername() {
-      var usernameInput = document.getElementById('username');
-      var username = usernameInput.value.trim();
-      if (username !== '') {
+    function handleGoogleLogin(response) {
+      const decoded = jwt_decode(response.credential);
+      currentUser = decoded.name || decoded.email;
+      startChat();
+    }
+
+    function manualLogin() {
+      const username = document.getElementById('manual-username').value.trim();
+      const password = document.getElementById('manual-password').value.trim();
+      if (username && password) {
         currentUser = username;
-        document.getElementById('username-area').style.display = 'none';
-        document.getElementById('chat-area').style.display = 'flex';
-        socket.emit('message', { username: currentUser, text: 'joined the chat!' });
+        startChat();
       }
+    }
+
+    function startChat() {
+      document.getElementById('auth-area').style.display = 'none';
+      document.getElementById('chat-area').style.display = 'flex';
+      socket.emit('message', { username: currentUser, text: 'joined the chat!' });
     }
 
     function sendMessage() {
