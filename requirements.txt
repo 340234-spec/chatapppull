@@ -1,3 +1,2 @@
 flask
-flask-socketio
-eventlet
+flask-socketio==5.3.2
