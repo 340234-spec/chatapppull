@@ -8,7 +8,17 @@
     let isMod = false;
 
     function handleGoogleLogin(response) {
-      const decoded = jwt_decode(response.credential);
+      localStorage.setItem("googleToken", response.credential);
+      decodeAndLogin(response.credential);
+    }
+
+    function restoreLogin() {
+      const token = localStorage.getItem("googleToken");
+      if (token) decodeAndLogin(token);
+    }
+
+    function decodeAndLogin(token) {
+      const decoded = jwt_decode(token);
       const email = decoded.email;
       const name = decoded.name;
 
@@ -25,6 +35,19 @@
       document.getElementById("accountInfo").textContent = `Logged in as: ${currentUser}`;
       socket.emit("join", { username: currentUser, email });
     }
+
+    function isTabInactive() {
+      return document.hidden;
+    }
+
+    window.onload = () => {
+      restoreLogin();
+      if ("Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission().then(permission => {
+          console.log("Notification permission:", permission);
+        });
+      }
+    };
   </script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -56,6 +79,20 @@
       margin: 5px 0;
       padding: 5px;
       border-bottom: 1px solid #eee;
+    }
+
+    .message button {
+      margin-left: 10px;
+      padding: 4px 8px;
+      font-size: 12px;
+      background-color: #ddd;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .message button:hover {
+      background-color: #ccc;
     }
 
     #msgInput {
@@ -161,21 +198,43 @@
       document.getElementById("banInput").value = "";
     }
 
-    socket.on("message", msg => {
+    function renderMessage(msg) {
       const div = document.createElement("div");
       div.className = "message";
       div.textContent = msg;
+
+      const replyBtn = document.createElement("button");
+      replyBtn.textContent = "Reply";
+      replyBtn.onclick = () => {
+        const target = msg.split(":")[0];
+        document.getElementById("msgInput").value = `@${target} `;
+        document.getElementById("msgInput").focus();
+      };
+
+      div.appendChild(replyBtn);
       document.getElementById("chatBox").appendChild(div);
+    }
+
+    socket.on("message", msg => {
+      renderMessage(msg);
       document.getElementById("chatBox").scrollTop = chatBox.scrollHeight;
+
+      if (isTabInactive() && Notification.permission === "granted") {
+        const sender = msg.split(":")[0];
+        const text = msg.split(":").slice(1).join(":").trim();
+        if (sender !== currentUser) {
+          new Notification(`New message from ${sender}`, {
+            body: text,
+            icon: "https://chat.openai.com/favicon.ico"
+          });
+        }
+      }
     });
 
     socket.on("history", history => {
-      document.getElementById("history").innerHTML = "<h4>Message History</h4>";
-      history.forEach(msg => {
-        const div = document.createElement("div");
-        div.textContent = msg;
-        document.getElementById("history").appendChild(div);
-      });
+      document.getElementById("chatBox").innerHTML = "";
+      history.forEach(msg => renderMessage(msg));
+      document.getElementById("chatBox").scrollTop = chatBox.scrollHeight;
     });
   </script>
 </body>
