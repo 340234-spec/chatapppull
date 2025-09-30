@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, async_mode='threading')  # 👈 Use threading mode
+socketio = SocketIO(app, async_mode='threading')
 
 message_history = []
 banned_users = set()
@@ -21,9 +21,6 @@ def handle_join(data):
 
 @socketio.on('message')
 def handle_message(data):
-    email = data.get('email')
-    if email in banned_users:
-        return
     username = data.get('username', 'Anonymous')
     text = data.get('text', '')
     full_msg = f"{username}: {text}"
@@ -36,4 +33,4 @@ def handle_ban(data):
     banned_users.add(email)
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8080)
+    socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
