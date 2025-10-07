@@ -3,150 +3,7 @@
 <head>
   <title>Chat App</title>
   <meta name="google-signin-client_id" content="1011927387913-iuaom6p156jlc026ujnfd3ctkeh6o3re.apps.googleusercontent.com">
-  <script>
-    let currentUser = null;
-    let isMod = false;
-
-    function handleGoogleLogin(response) {
-      localStorage.setItem("googleToken", response.credential);
-      decodeAndLogin(response.credential);
-    }
-
-    function restoreLogin() {
-      const token = localStorage.getItem("googleToken");
-      if (token) decodeAndLogin(token);
-    }
-
-    function decodeAndLogin(token) {
-      const decoded = jwt_decode(token);
-      const email = decoded.email;
-      const name = decoded.name;
-
-      currentUser = name || email;
-      isMod = email === "340234@apps.wilsonareasd.org";
-
-      document.querySelector(".g_id_signin").style.display = "none";
-      document.getElementById("g_id_onload").style.display = "none";
-
-      if (isMod) {
-        document.getElementById("modPanel").style.display = "block";
-      }
-
-      document.getElementById("accountInfo").textContent = `Logged in as: ${currentUser}`;
-      socket.emit("join", { username: currentUser, email });
-    }
-
-    function isTabInactive() {
-      return document.hidden;
-    }
-
-    window.onload = () => {
-      restoreLogin();
-      if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission().then(permission => {
-          console.log("Notification permission:", permission);
-        });
-      }
-    };
-  </script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f7fb;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h2 {
-      color: #2c3e50;
-    }
-
-    #chatBox {
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 10px;
-      height: 300px;
-      overflow-y: scroll;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .message {
-      margin: 5px 0;
-      padding: 5px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .message button {
-      margin-left: 10px;
-      padding: 4px 8px;
-      font-size: 12px;
-      background-color: #ddd;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .message button:hover {
-      background-color: #ccc;
-    }
-
-    #msgInput {
-      width: 70%;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      padding: 8px 12px;
-      margin-left: 5px;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #2980b9;
-    }
-
-    #g_id_onload, .g_id_signin {
-      margin-bottom: 20px;
-    }
-
-    #modPanel {
-      display: none;
-      border: 2px solid #3498db;
-      border-radius: 8px;
-      padding: 10px;
-      margin-top: 20px;
-      background-color: #eaf4fc;
-    }
-
-    #history {
-      margin-top: 10px;
-      max-height: 200px;
-      overflow-y: auto;
-      border-top: 1px solid #3498db;
-      padding-top: 10px;
-    }
-
-    #accountInfo {
-      margin-top: 20px;
-      padding: 10px;
-      background: #dfe6e9;
-      border-top: 1px solid #ccc;
-      font-size: 14px;
-      color: #2d3436;
-      border-radius: 4px;
-    }
-  </style>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
   <h2>Welcome to Chat</h2>
@@ -162,80 +19,21 @@
   <!-- Chat UI -->
   <div id="chatBox"></div>
   <input id="msgInput" placeholder="Type a message..." />
-  <button onclick="sendMessage()">Send</button>
+  <button id="sendBtn">Send</button>
 
   <!-- Mod Dashboard -->
   <div id="modPanel">
     <h3>Mod Dashboard</h3>
     <input id="banInput" placeholder="Ban email..." />
-    <button onclick="banUser()">Ban</button>
+    <button id="banBtn">Ban</button>
     <div id="history"></div>
   </div>
 
   <!-- Account Info -->
   <div id="accountInfo"></div>
 
-  <script>
-    const socket = io();
-
-    function jwt_decode(token) {
-      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      const json = decodeURIComponent(atob(base64).split('').map(c =>
-        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-      ).join(''));
-      return JSON.parse(json);
-    }
-
-    function sendMessage() {
-      const text = document.getElementById("msgInput").value;
-      socket.emit("message", { username: currentUser, text });
-      document.getElementById("msgInput").value = "";
-    }
-
-    function banUser() {
-      const email = document.getElementById("banInput").value;
-      socket.emit("ban", { email });
-      document.getElementById("banInput").value = "";
-    }
-
-    function renderMessage(msg) {
-      const div = document.createElement("div");
-      div.className = "message";
-      div.textContent = msg;
-
-      const replyBtn = document.createElement("button");
-      replyBtn.textContent = "Reply";
-      replyBtn.onclick = () => {
-        const target = msg.split(":")[0];
-        document.getElementById("msgInput").value = `@${target} `;
-        document.getElementById("msgInput").focus();
-      };
-
-      div.appendChild(replyBtn);
-      document.getElementById("chatBox").appendChild(div);
-    }
-
-    socket.on("message", msg => {
-      renderMessage(msg);
-      document.getElementById("chatBox").scrollTop = chatBox.scrollHeight;
-
-      if (isTabInactive() && Notification.permission === "granted") {
-        const sender = msg.split(":")[0];
-        const text = msg.split(":").slice(1).join(":").trim();
-        if (sender !== currentUser) {
-          new Notification(`New message from ${sender}`, {
-            body: text,
-            icon: "https://chat.openai.com/favicon.ico"
-          });
-        }
-      }
-    });
-
-    socket.on("history", history => {
-      document.getElementById("chatBox").innerHTML = "";
-      history.forEach(msg => renderMessage(msg));
-      document.getElementById("chatBox").scrollTop = chatBox.scrollHeight;
-    });
-  </script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/static/js/main.js"></script>
 </body>
 </html>

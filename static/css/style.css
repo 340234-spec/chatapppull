@@ -1,0 +1,75 @@
+body {
+  font-family: 'Orbitron', sans-serif;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: #fff;
+  margin: 0;
+  padding: 20px;
+}
+
+h2 {
+  text-align: center;
+  color: #00fff7;
+  text-shadow: 0 0 10px #00fff7;
+}
+
+#chatBox {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid #00fff7;
+  border-radius: 10px;
+  padding: 10px;
+  height: 300px;
+  overflow-y: scroll;
+  box-shadow: 0 0 20px #00fff7;
+}
+
+.message {
+  margin: 5px 0;
+  padding: 5px;
+  border-bottom: 1px solid #00fff7;
+}
+
+#msgInput {
+  width: 70%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #00fff7;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+}
+
+button {
+  padding: 8px 12px;
+  margin-left: 5px;
+  background-color: #00fff7;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #00d4b7;
+}
+
+#g_id_onload, .g_id_signin {
+  margin-bottom: 20px;
+}
+
+#modPanel {
+  display: none;
+  border: 2px solid #00fff7;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 20px;
+  background-color: rgba(0, 255, 247, 0.1);
+}
+
+#accountInfo {
+  margin-top: 20px;
+  padding: 10px;
+  background: rgba(0,0,0,0.5);
+  border-top: 1px solid #00fff7;
+  font-size: 14px;
+  color: #00fff7;
+  border-radius: 4px;
+}
