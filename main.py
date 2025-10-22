@@ -111,5 +111,4 @@ def handle_unban(data):
 # === Server Runner ===
 
 if __name__ == '__main__':
-    app.debug = True
-    socketio.run(app, host='0.0.0.0', port=8080)
+    socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
