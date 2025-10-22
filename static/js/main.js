@@ -1,4 +1,4 @@
-// main.js
+
 let socket = null;
 let currentUser = null;
 let currentEmail = null;
@@ -7,6 +7,13 @@ let isMod = false;
 // Initialize socket and page
 window.addEventListener("DOMContentLoaded", () => {
   socket = io({ transports: ['websocket'] });
+
+  // Hide Dev Login button unless localStorage flag is set
+  const devBtn = document.getElementById("devLoginBtn");
+  const isRenee = localStorage.getItem("isRenee") === "true";
+  if (!isRenee && devBtn) {
+    devBtn.style.display = "none";
+  }
 
   socket.on("connect", () => {
     console.log("Connected to server:", socket.id);
@@ -32,17 +39,17 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Send message on Enter key
   document.getElementById("msgInput").addEventListener("keypress", (e) => {
     if (e.key === "Enter") sendMessage();
   });
 
-  // Ask for notification permission
   if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission().then(permission => {
       console.log("Notification permission:", permission);
     });
   }
+
+  if (devBtn) devBtn.addEventListener("click", handleDevLogin);
 });
 
 // --- Google Login Handling ---
@@ -54,7 +61,11 @@ function handleGoogleLogin(response) {
 
 function restoreLogin() {
   const token = localStorage.getItem("googleToken");
-  if (token) verifyToken(token);
+
+  // Only verify if token exists and isn't dev
+  if (!token || token === "dev") return;
+
+  verifyToken(token);
 }
 
 function verifyToken(token) {
@@ -70,19 +81,34 @@ function verifyToken(token) {
       currentEmail = data.email;
       isMod = data.is_mod;
 
-      document.querySelector(".g_id_signin").style.display = "none";
-      document.getElementById("g_id_onload").style.display = "none";
-
-      if (isMod) document.getElementById("modPanel").style.display = "block";
+      const signin = document.querySelector(".g_id_signin");
+      const onload = document.getElementById("g_id_onload");
+      if (signin) signin.style.display = "none";
+      if (onload) onload.style.display = "none";
 
       document.getElementById("accountInfo").textContent = `Logged in as: ${currentUser}`;
+      if (isMod) document.getElementById("modPanel").style.display = "block";
 
-      // Join chat
       socket.emit("join", { token });
     } else {
       console.warn("Token invalid or banned:", data.error);
     }
   });
+}
+
+// --- Dev Login ---
+function handleDevLogin() {
+  fetch("/dev-login")
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) throw new Error("Dev login failed");
+      localStorage.setItem("googleToken", data.token);
+      verifyToken(data.token);
+    })
+    .catch(err => {
+      console.error("Dev login error:", err);
+      alert("Dev login failed: " + err.message);
+    });
 }
 
 // --- Sending Messages ---
@@ -116,7 +142,13 @@ function banUser() {
 function renderMessage(msg) {
   const div = document.createElement("div");
   div.className = "message";
-  div.textContent = msg;
+
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const safeMsg = msg.replace(urlRegex, url => {
+    return `<a href="${url}" target="_blank" style="color:#3498db;text-decoration:underline;">${url}</a>`;
+  });
+
+  div.innerHTML = safeMsg;
 
   const replyBtn = document.createElement("button");
   replyBtn.textContent = "Reply";
@@ -137,7 +169,7 @@ function showNotification(sender, text) {
 
   new Notification(`New message from ${sender}`, {
     body: text,
-    icon: "https://chat.openai.com/favicon.ico" // replace with your own icon if desired
+    icon: "https://chat.openai.com/favicon.ico"
   });
 }
 

@@ -4,3 +4,5 @@ python-socketio==5.8.0
 python-engineio==4.4.0
 requests
 simple-websocket
+google-auth
+bcrypt

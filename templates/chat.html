@@ -16,22 +16,28 @@
   </div>
   <div class="g_id_signin" data-type="standard"></div>
 
+  <!-- Dev Login -->
+  <div style="margin-top: 1em;">
+    <button id="devLoginBtn">Dev Login</button>
+  </div>
+
   <!-- Chat UI -->
   <div id="chatBox"></div>
   <input id="msgInput" placeholder="Type a message..." />
-  <button id="sendBtn">Send</button>
+  <button id="sendBtn" onclick="sendMessage()">Send</button>
 
   <!-- Mod Dashboard -->
-  <div id="modPanel">
+  <div id="modPanel" style="display: none;">
     <h3>Mod Dashboard</h3>
     <input id="banInput" placeholder="Ban email..." />
-    <button id="banBtn">Ban</button>
+    <button id="banBtn" onclick="banUser()">Ban</button>
     <div id="history"></div>
   </div>
 
   <!-- Account Info -->
-  <div id="accountInfo"></div>
+  <div id="accountInfo" style="margin-top: 1em;"></div>
 
+  <!-- Scripts -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/static/js/main.js"></script>
