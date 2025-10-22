@@ -1,4 +1,3 @@
-
 let socket = null;
 let currentUser = null;
 let currentEmail = null;
@@ -182,3 +181,4 @@ function scrollChat() {
 function isTabInactive() {
   return document.hidden;
 }
+alert('js loaded this is debug if you see this i messed up and forgot to remove')
