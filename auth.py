@@ -45,7 +45,7 @@ def verify_token(token):
     if token == "dev":
         return {
             "email": "340234@apps.wilsonareasd.org",
-            "name": "Renee"
+            "name": "DEV"
         }
     try:
         info = id_token.verify_oauth2_token(token, requests.Request())
