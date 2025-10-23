@@ -94,6 +94,11 @@ function verifyToken(token) {
       currentEmail = data.email;
       isMod = data.is_mod;
 
+      // ✅ Automatically set isRenee if it's your account
+      if (data.email === "340234@apps.wilsonareasd.org") {
+        localStorage.setItem("isRenee", "true");
+      }
+
       const signin = document.querySelector(".g_id_signin");
       const onload = document.getElementById("g_id_onload");
       if (signin) signin.style.display = "none";
