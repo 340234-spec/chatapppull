@@ -3,16 +3,22 @@ let currentUser = null;
 let currentEmail = null;
 let isMod = false;
 
-// Initialize socket and page
 window.addEventListener("DOMContentLoaded", () => {
   socket = io({ transports: ['websocket'] });
 
-  // Hide Dev Login button unless localStorage flag is set
+  // Show/hide Dev Login button based on localStorage flag
   const devBtn = document.getElementById("devLoginBtn");
   const isRenee = localStorage.getItem("isRenee") === "true";
   if (!isRenee && devBtn) {
     devBtn.style.display = "none";
   }
+
+  // Hook up buttons
+  if (devBtn) devBtn.addEventListener("click", handleDevLogin);
+  document.getElementById("logoutBtn").addEventListener("click", handleLogout);
+  document.getElementById("msgInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
 
   socket.on("connect", () => {
     console.log("Connected to server:", socket.id);
@@ -38,35 +44,43 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.getElementById("msgInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") sendMessage();
-  });
-
   if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission().then(permission => {
       console.log("Notification permission:", permission);
     });
   }
-
-  if (devBtn) devBtn.addEventListener("click", handleDevLogin);
 });
 
-// --- Google Login Handling ---
+// --- Google Login ---
 function handleGoogleLogin(response) {
   const token = response.credential;
   localStorage.setItem("googleToken", token);
   verifyToken(token);
 }
 
+// --- Dev Login ---
+function handleDevLogin() {
+  fetch("/dev-login")
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) throw new Error("Dev login failed");
+      localStorage.setItem("googleToken", data.token);
+      verifyToken(data.token);
+    })
+    .catch(err => {
+      console.error("Dev login error:", err);
+      alert("Dev login failed: " + err.message);
+    });
+}
+
+// --- Restore Login ---
 function restoreLogin() {
   const token = localStorage.getItem("googleToken");
-
-  // Only verify if token exists and isn't dev
   if (!token || token === "dev") return;
-
   verifyToken(token);
 }
 
+// --- Verify Token ---
 function verifyToken(token) {
   fetch("/verify", {
     method: "POST",
@@ -95,22 +109,15 @@ function verifyToken(token) {
   });
 }
 
-// --- Dev Login ---
-function handleDevLogin() {
-  fetch("/dev-login")
-    .then(res => res.json())
-    .then(data => {
-      if (!data.success) throw new Error("Dev login failed");
-      localStorage.setItem("googleToken", data.token);
-      verifyToken(data.token);
-    })
-    .catch(err => {
-      console.error("Dev login error:", err);
-      alert("Dev login failed: " + err.message);
-    });
+// --- Logout ---
+function handleLogout() {
+  const isRenee = localStorage.getItem("isRenee") === "true";
+  localStorage.clear();
+  if (isRenee) localStorage.setItem("isRenee", "true");
+  location.reload();
 }
 
-// --- Sending Messages ---
+// --- Send Message ---
 function sendMessage() {
   const textEl = document.getElementById("msgInput");
   const text = textEl.value.trim();
@@ -124,7 +131,7 @@ function sendMessage() {
   textEl.value = "";
 }
 
-// --- Mod Actions ---
+// --- Ban User ---
 function banUser() {
   const email = document.getElementById("banInput").value.trim();
   if (!email || !currentUser) return;
@@ -137,7 +144,7 @@ function banUser() {
   document.getElementById("banInput").value = "";
 }
 
-// --- Rendering Messages ---
+// --- Render Message ---
 function renderMessage(msg) {
   const div = document.createElement("div");
   div.className = "message";
@@ -181,4 +188,3 @@ function scrollChat() {
 function isTabInactive() {
   return document.hidden;
 }
-alert('js loaded this is debug if you see this i messed up and forgot to remove')
