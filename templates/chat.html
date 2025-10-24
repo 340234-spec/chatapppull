@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Chat App</title>
+  <title>Global Chat</title>
   <meta name="google-signin-client_id" content="1011927387913-iuaom6p156jlc026ujnfd3ctkeh6o3re.apps.googleusercontent.com">
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <h2>Welcome to Chat</h2>
+  <h2>Global Chat</h2>
 
   <!-- Google Sign-In -->
   <div id="g_id_onload"
@@ -16,7 +16,7 @@
   </div>
   <div class="g_id_signin" data-type="standard"></div>
 
-  <!-- Dev Login (conditionally shown via main.js) -->
+  <!-- Dev Login -->
   <div style="margin-top: 1em;">
     <button id="devLoginBtn">Dev Login</button>
   </div>
@@ -25,13 +25,13 @@
   <div id="chatBox"></div>
   <input id="msgInput" placeholder="Type a message..." />
   <button id="sendBtn" onclick="sendMessage()">Send</button>
+  <button id="privateBtn">Private Chat</button>
 
   <!-- Mod Dashboard -->
   <div id="modPanel" style="display: none;">
     <h3>Mod Dashboard</h3>
     <input id="banInput" placeholder="Ban email..." />
     <button id="banBtn" onclick="banUser()">Ban</button>
-    <div id="history"></div>
   </div>
 
   <!-- Account Info + Logout -->
@@ -41,6 +41,6 @@
   <!-- Scripts -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="/static/js/main.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

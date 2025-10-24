@@ -1,33 +1,44 @@
-from flask import Flask, render_template, request, jsonify
-from flask_socketio import SocketIO, emit
-from auth import (
-    verify_token,
-    is_mod,
-    is_banned,
-    ban_user,
-    unban_user
-)
+from flask import Flask, request, jsonify, render_template
+from flask_socketio import SocketIO, emit, join_room
+from auth import verify_token
+import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-message_history = []
+chat_history = []
+user_sockets = {}  # Maps email or name to socket ID
+banned_emails = set()
+dev_users = set()
+dev_mode_level = 0
+MOD_EMAILS = {
+    "340234@apps.wilsonareasd.org",
+    "caseysmail0715@gmail.com",
+    "340195@apps.wilsonareasd.org"
+}
 
-# === Routes ===
-
-@app.route('/')
+# --- Routes ---
+@app.route("/")
 def index():
-    return render_template('chat.html')
+    return render_template("chat.html")
 
-@app.route('/verify', methods=['POST'])
+@app.route("/dm")
+def dm_page():
+    return render_template("dm.html")
+
+@app.route("/dev-login")
+def dev_login():
+    return jsonify({
+        "success": True,
+        "token": "dev"
+    })
+
+@app.route("/verify", methods=["POST"])
 def verify():
     data = request.get_json()
-    if not data or "token" not in data:
-        return jsonify({"success": False, "error": "No token provided"}), 400
-
-    token = data["token"]
+    token = data.get("token")
     user = verify_token(token)
+
     if not user:
         return jsonify({"success": False, "error": "Invalid token"}), 401
 
@@ -42,73 +53,95 @@ def verify():
         "banned": is_banned(user["email"])
     })
 
-@app.route('/dev-login', methods=['GET', 'POST'])
-def dev_login():
-    # Dev login returns a usable token and user info
-    return jsonify({
-        "success": True,
-        "token": "dev",
-        "email": "im watching",
-        "name": "DEV",
-        "is_mod": True,
-        "banned": True,
-    })
-
-@app.route('/crash')
-def crash():
-    raise Exception("Intentional crash for testing")
-
-# === Socket.IO Events ===
-
-@socketio.on('join')
+# --- Socket.IO Events ---
+@socketio.on("join")
 def handle_join(data):
     token = data.get("token")
     user = verify_token(token)
-    if not user or is_banned(user["email"]):
+    if not user:
         return
-    emit('history', message_history, to=request.sid)
 
-@socketio.on('message')
+    email = user["email"]
+    name = user["name"]
+    sid = request.sid
+
+    user_sockets[email] = sid
+    user_sockets[name] = sid
+
+    join_room("global")
+    emit("history", chat_history, to=sid)
+
+    if token == "dev":
+        dev_users.add(sid)
+        update_dev_mode_level()
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    sid = request.sid
+    if sid in dev_users:
+        dev_users.remove(sid)
+        update_dev_mode_level()
+
+def update_dev_mode_level():
+    global dev_mode_level
+    dev_mode_level = len(dev_users)
+    socketio.emit("dev_level", {"level": dev_mode_level})
+    print(f"Dev mode level updated: {dev_mode_level}")
+
+@socketio.on("message")
 def handle_message(data):
     token = data.get("token")
-    user = verify_token(token)
-    if not user or is_banned(user["email"]):
-        return
-
-    username = user["name"]
     text = data.get("text", "").strip()
-    if not text:
+    user = verify_token(token)
+
+    if not user or is_banned(user["email"]) or not text:
         return
 
-    full_msg = f"{username}: {text}"
-    message_history.append(full_msg)
+    msg = f"{user['name']}: {text}"
+    chat_history.append(msg)
+    emit("message", msg, to="global")
 
-    print("Broadcasting message:", full_msg)
-    emit('message', full_msg, broadcast=True)
+@socketio.on("private")
+def handle_private(data):
+    to = data.get("to")
+    text = data.get("text")
+    from_user = data.get("from")
+    token = data.get("token")
 
-@socketio.on('ban')
+    user = verify_token(token)
+    if not user or is_banned(user["email"]) or not text:
+        return
+
+    target_sid = user_sockets.get(to)
+    print(f"Private message from {from_user} to {to}: {text}")
+    print(f"Target SID: {target_sid}")
+
+    if target_sid:
+        msg = f"[Private] {from_user}: {text}"
+        emit("message", msg, to=target_sid)
+        emit("message", f"[Private to {to}] {text}", to=request.sid)
+    else:
+        emit("message", f"User '{to}' not found", to=request.sid)
+
+@socketio.on("ban")
 def handle_ban(data):
-    token = data.get('token')
+    token = data.get("token")
+    email = data.get("email")
     user = verify_token(token)
-    if not user or not is_mod(user["email"]):
+
+    if not user or not is_mod(user["email"]) or not email:
         return
-    email_to_ban = data.get('email')
-    if email_to_ban:
-        ban_user(email_to_ban)
-        print(f"User banned: {email_to_ban}")
 
-@socketio.on('unban')
-def handle_unban(data):
-    token = data.get('token')
-    user = verify_token(token)
-    if not user or not is_mod(user["email"]):
-        return
-    email_to_unban = data.get('email')
-    if email_to_unban:
-        unban_user(email_to_unban)
-        print(f"User unbanned: {email_to_unban}")
+    banned_emails.add(email)
+    emit("message", f"{email} has been banned by {user['name']}", to="global")
 
-# === Server Runner ===
+# --- Helpers ---
+def is_banned(email):
+    return email in banned_emails
 
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
+def is_mod(email):
+    return email in MOD_EMAILS
+
+# --- Run Server ---
+if __name__ == "__main__":
+    socketio.run(app, host="0.0.0.0", port=8080, allow_unsafe_werkzeug=True)

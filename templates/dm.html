@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Private Chat</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <h2>Private Chat with <span id="dmTarget"></span></h2>
+
+  <div id="dmBox"></div>
+
+  <input id="dmInput" placeholder="Type a private message..." />
+  <button onclick="sendPrivate()">Send</button>
+  <button onclick="goBack()">Back to Global Chat</button>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='js/dm.js') }}"></script>
+</body>
+</html>

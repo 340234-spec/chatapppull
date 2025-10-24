@@ -1,75 +1,118 @@
+/* === Base === */
 body {
-  font-family: 'Orbitron', sans-serif;
-  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-  color: #fff;
+  font-family: 'Orbitron', 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at top left, #0f2027, #203a43, #2c5364);
+  color: #e0e0e0;
   margin: 0;
   padding: 20px;
 }
 
 h2 {
-  text-align: center;
   color: #00fff7;
-  text-shadow: 0 0 10px #00fff7;
+  text-shadow: 0 0 8px #00fff7;
+  margin-bottom: 10px;
 }
 
-#chatBox {
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid #00fff7;
-  border-radius: 10px;
+/* === Inputs & Buttons === */
+input, button {
+  font-size: 16px;
   padding: 10px;
-  height: 300px;
-  overflow-y: scroll;
-  box-shadow: 0 0 20px #00fff7;
+  margin: 6px;
+  border-radius: 6px;
+  border: none;
+  outline: none;
 }
 
-.message {
-  margin: 5px 0;
-  padding: 5px;
-  border-bottom: 1px solid #00fff7;
-}
-
-#msgInput {
-  width: 70%;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #00fff7;
-  background: rgba(0,0,0,0.6);
+input {
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
+  border: 1px solid #00fff7;
 }
 
 button {
-  padding: 8px 12px;
-  margin-left: 5px;
-  background-color: #00fff7;
-  color: #000;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  background: linear-gradient(to right, #00c6ff, #0072ff);
+  color: white;
+  box-shadow: 0 0 10px #00c6ff;
+  transition: transform 0.2s ease;
 }
 
 button:hover {
-  background-color: #00d4b7;
+  transform: scale(1.05);
 }
 
-#g_id_onload, .g_id_signin {
-  margin-bottom: 20px;
-}
-
-#modPanel {
-  display: none;
-  border: 2px solid #00fff7;
+/* === Chat Box === */
+#chatBox, #dmBox {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #00fff7;
   border-radius: 8px;
-  padding: 10px;
-  margin-top: 20px;
-  background-color: rgba(0, 255, 247, 0.1);
+  padding: 12px;
+  height: 320px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  backdrop-filter: blur(6px);
 }
 
-#accountInfo {
-  margin-top: 20px;
+/* === Messages === */
+.message, .dmMessage {
+  margin-bottom: 10px;
   padding: 10px;
-  background: rgba(0,0,0,0.5);
-  border-top: 1px solid #00fff7;
-  font-size: 14px;
+  background: rgba(0, 255, 247, 0.1);
+  border-left: 4px solid #00fff7;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.message button, .dmMessage button {
+  margin-left: 10px;
+  font-size: 12px;
+  padding: 6px 10px;
+  background-color: #0072ff;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  box-shadow: 0 0 6px #0072ff;
+}
+
+.message button:hover, .dmMessage button:hover {
+  background-color: #0055cc;
+}
+
+/* === Mod Panel === */
+#modPanel {
+  margin-top: 20px;
+  padding: 12px;
+  background: rgba(255, 255, 0, 0.1);
+  border: 1px solid #f1c40f;
+  border-radius: 6px;
+  color: #f1c40f;
+}
+
+/* === Account Info === */
+#accountInfo {
+  margin-top: 10px;
+  font-weight: bold;
   color: #00fff7;
+}
+
+/* === Private Message Styling === */
+.dmMessage {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-left: 4px solid #a29bfe;
+}
+
+.dmMessage.privateTo {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-left: 4px solid #ffeaa7;
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #00fff7;
   border-radius: 4px;
 }

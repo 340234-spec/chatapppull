@@ -6,14 +6,10 @@ let isMod = false;
 window.addEventListener("DOMContentLoaded", () => {
   socket = io({ transports: ['websocket'] });
 
-  // Show/hide Dev Login button based on localStorage flag
   const devBtn = document.getElementById("devLoginBtn");
   const isRenee = localStorage.getItem("isRenee") === "true";
-  if (!isRenee && devBtn) {
-    devBtn.style.display = "none";
-  }
+  if (!isRenee && devBtn) devBtn.style.display = "none";
 
-  // Hook up buttons
   if (devBtn) devBtn.addEventListener("click", handleDevLogin);
   document.getElementById("logoutBtn").addEventListener("click", handleLogout);
   document.getElementById("msgInput").addEventListener("keypress", (e) => {
@@ -44,9 +40,33 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  socket.on("dev_level", data => {
+    console.log("Dev mode level:", data.level);
+    // Optional: use this to toggle dev-only features
+  });
+
   if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission().then(permission => {
       console.log("Notification permission:", permission);
+    });
+  }
+
+  // Optional: Private Chat button
+  const privateBtn = document.getElementById("privateBtn");
+  if (privateBtn) {
+    privateBtn.addEventListener("click", () => {
+      const to = prompt("Send private message to (username):");
+      if (!to) return;
+      const text = prompt(`Message to @${to}:`);
+      if (!text) return;
+
+      const token = localStorage.getItem("googleToken");
+      socket.emit("private", {
+        to,
+        text,
+        from: currentUser,
+        token
+      });
     });
   }
 });
@@ -94,7 +114,8 @@ function verifyToken(token) {
       currentEmail = data.email;
       isMod = data.is_mod;
 
-      // ✅ Automatically set isRenee if it's your account
+      localStorage.setItem("userName", data.name);
+
       if (data.email === "340234@apps.wilsonareasd.org") {
         localStorage.setItem("isRenee", "true");
       }
@@ -128,10 +149,22 @@ function sendMessage() {
   const text = textEl.value.trim();
   if (!text || !currentUser) return;
 
-  socket.emit("message", {
-    text,
-    token: localStorage.getItem("googleToken")
-  });
+  const token = localStorage.getItem("googleToken");
+
+  const match = text.match(/^@(\w+):\s*(.+)/);
+  if (match) {
+    const target = match[1];
+    const message = match[2];
+
+    socket.emit("private", {
+      to: target,
+      text: message,
+      from: currentUser,
+      token
+    });
+  } else {
+    socket.emit("message", { text, token });
+  }
 
   textEl.value = "";
 }
@@ -161,15 +194,32 @@ function renderMessage(msg) {
 
   div.innerHTML = safeMsg;
 
+  if (msg.startsWith("[Private]")) {
+    div.style.backgroundColor = "#f9f0ff";
+    div.style.borderLeft = "4px solid #a29bfe";
+  }
+  if (msg.startsWith("[Private to")) {
+    div.style.backgroundColor = "#fffbe6";
+    div.style.borderLeft = "4px solid #ffeaa7";
+  }
+
   const replyBtn = document.createElement("button");
   replyBtn.textContent = "Reply";
   replyBtn.onclick = () => {
-    const target = msg.split(":")[0];
-    document.getElementById("msgInput").value = `@${target} `;
+    const target = msg.split(":")[0].replace("[Private]", "").replace("[Private to", "").replace("]", "").trim();
+    document.getElementById("msgInput").value = `@${target}: `;
     document.getElementById("msgInput").focus();
   };
 
+  const dmBtn = document.createElement("button");
+  dmBtn.textContent = "DM";
+  dmBtn.onclick = () => {
+    const target = msg.split(":")[0].trim();
+    window.location.href = `/dm?user=${encodeURIComponent(target)}`;
+  };
+
   div.appendChild(replyBtn);
+  div.appendChild(dmBtn);
   document.getElementById("chatBox").appendChild(div);
 }
 
