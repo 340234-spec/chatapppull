@@ -42,7 +42,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   socket.on("dev_level", data => {
     console.log("Dev mode level:", data.level);
-    // Optional: use this to toggle dev-only features
   });
 
   if ("Notification" in window && Notification.permission !== "granted") {
@@ -51,7 +50,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Optional: Private Chat button
   const privateBtn = document.getElementById("privateBtn");
   if (privateBtn) {
     privateBtn.addEventListener("click", () => {
@@ -96,7 +94,7 @@ function handleDevLogin() {
 // --- Restore Login ---
 function restoreLogin() {
   const token = localStorage.getItem("googleToken");
-  if (!token || token === "dev") return;
+  if (!token) return;
   verifyToken(token);
 }
 
@@ -180,6 +178,19 @@ function banUser() {
   });
 
   document.getElementById("banInput").value = "";
+}
+
+// --- Unban User ---
+function unbanUser() {
+  const email = document.getElementById("unbanInput").value.trim();
+  if (!email || !currentUser) return;
+
+  socket.emit("unban", {
+    email,
+    token: localStorage.getItem("googleToken")
+  });
+
+  document.getElementById("unbanInput").value = "";
 }
 
 // --- Render Message ---

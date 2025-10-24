@@ -15,8 +15,8 @@ dev_mode_level = 0
 # ✅ Multiple mod emails
 MOD_EMAILS = {
     "340234@apps.wilsonareasd.org",
-    "renee@example.com",
-    "admin@school.edu"
+    "caseysmail0715@gmail.com",
+    "340195@apps.wilsonareasd.org"
 }
 
 # --- Routes ---
