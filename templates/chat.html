@@ -4,6 +4,7 @@
   <title>Global Chat</title>
   <meta name="google-signin-client_id" content="1011927387913-iuaom6p156jlc026ujnfd3ctkeh6o3re.apps.googleusercontent.com">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
   <h2>Global Chat</h2>
@@ -31,7 +32,9 @@
   <div id="modPanel" style="display: none;">
     <h3>Mod Dashboard</h3>
     <input id="banInput" placeholder="Ban email..." />
-    <button id="banBtn" onclick="banUser()">Ban</button>
+    <button onclick="banUser()">Ban</button>
+    <input id="unbanInput" placeholder="Unban email..." />
+    <button onclick="unbanUser()">Unban</button>
   </div>
 
   <!-- Account Info + Logout -->

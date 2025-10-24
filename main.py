@@ -11,10 +11,12 @@ user_sockets = {}  # Maps email or name to socket ID
 banned_emails = set()
 dev_users = set()
 dev_mode_level = 0
+
+# ✅ Multiple mod emails
 MOD_EMAILS = {
     "340234@apps.wilsonareasd.org",
-    "caseysmail0715@gmail.com",
-    "340195@apps.wilsonareasd.org"
+    "renee@example.com",
+    "admin@school.edu"
 }
 
 # --- Routes ---
@@ -134,6 +136,19 @@ def handle_ban(data):
 
     banned_emails.add(email)
     emit("message", f"{email} has been banned by {user['name']}", to="global")
+
+@socketio.on("unban")
+def handle_unban(data):
+    token = data.get("token")
+    email = data.get("email")
+    user = verify_token(token)
+
+    if not user or not is_mod(user["email"]) or not email:
+        return
+
+    if email in banned_emails:
+        banned_emails.remove(email)
+        emit("message", f"{email} has been unbanned by {user['name']}", to="global")
 
 # --- Helpers ---
 def is_banned(email):
